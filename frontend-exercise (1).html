@@ -1,0 +1,157 @@
+<!--
+# JobTread Frontend Exercise
+
+The goal of the exercise is to create a simple live dashboard that shows a bar
+chart of the last 10 response times (in milliseconds) of simple GET requests to
+https://api.jobtread.com/healthz, updated every second.
+
+For example (not to scale):
+               ---- ---- ----      ----
+     ----      ---- ---- ---- ---- ----      ----
+---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+22.1 23.3 22.2 25.3 26.7 26.5 23.9 26.3 22.2 23.3
+
+- Render your root component to the `root` <div> provided below.
+- The endpoint has CORS enabled so it can be requested directly.
+- No external CSS or JavaScript should be imported besides the React and
+  ReactDOM libraries already included below.
+- Include all of your CSS and JavaScript in this file in the <style> and
+  <script> tags below.
+- The dashboard should run correctly in the latest version of Chrome when served
+  from the file protocol. Other browsers do not need to be tested for this
+  exercise.
+- Feel free to present the data in additional ways as well, if you choose.
+-->
+
+<!doctype html>
+<meta charset='utf-8'>
+<title>JobTread Frontend Exercise</title>
+<script src='https://unpkg.com/react@16/umd/react.development.js' crossorigin></script>
+<script src='https://unpkg.com/react-dom@16/umd/react-dom.development.js' crossorigin></script>
+
+<div id='root'>
+  <canvas></canvas>
+</div>
+
+<style>
+  /* TODO: Add your CSS here */
+
+  #root {
+    border: 1px solid black;
+    height: 500px;
+    width: 1000px;
+    margin-left: 110px;
+    margin-top: 80px;
+
+  }
+</style>
+
+<script>
+  // TODO: Add your JavaScript here
+
+  // Global variables
+  const canvas = document.querySelector('canvas')
+  canvas.width = 1000;
+  canvas.height = 500;
+
+  let xGrid = 10;
+  let yGrid = 10;
+  let cellSize = 10;
+
+  let ctx = canvas.getContext('2d')
+
+  
+  //setInterval(() => {
+    let preTime = new Date().getTime()
+    fetch("https://api.jobtread.com/healthz")
+     .then(res => {
+        let resTime = new Date().getTime()
+        console.log(resTime - preTime)
+        return res
+      })
+      .then(res => res.json())
+     
+      // eror catching
+      .catch(err => {
+        console.log(err)
+      })
+
+    // setting our timer to 800 miliseconds
+  //}, 800)
+
+  let info = {
+    canada: 1500,
+    usa: 1275,
+    china: 2100
+  }
+
+  const entries = Object.entries(info)
+
+
+  // drawing the background grid
+  function drawGrid() {
+    ctx.beginPath();
+    while (xGrid < canvas.height) {
+      ctx.moveTo(0, xGrid);
+      ctx.lineTo(canvas.width, xGrid);
+      xGrid += cellSize;
+    }
+    while (yGrid < canvas.width) {
+      ctx.moveTo(yGrid, 0);
+      ctx.lineTo(yGrid, canvas.height);
+      yGrid += cellSize;
+
+    }
+    ctx.strokeStyle = "gray";
+    ctx.stroke()
+  }
+  // defining the blocks in the grid
+  function blocks(count) {
+    return count * 10;
+  }
+  // drawing the two axis for our grid
+  function drawAxis() {
+
+    let yPlot = 40;
+    let pop = 0;
+    ctx.beginPath()
+    ctx.strokeStyle = "black";
+    ctx.moveTo(blocks(5), blocks(5));
+    ctx.lineTo(blocks(5), blocks(40));
+    ctx.lineTo(blocks(80), blocks(40));
+
+
+    ctx.moveTo(blocks(5), blocks(40));
+
+    for (let i = 1; i <= 10; i++) {
+      ctx.strokeText(pop, blocks(2), blocks(yPlot));
+      yPlot -= 5;
+      pop += 500;
+    }
+    ctx.stroke()
+  }
+  // drawing the data chart in the grid
+  function drawChart() {
+    ctx.beginPath()
+    ctx.strokeStyle = "blue";
+    ctx.moveTo(blocks(5), blocks(40));
+
+    var xPlot = 10;
+
+    for (const [api, time] of entries) {
+      let timeInBlocks = time / 100;
+      ctx.strokeText(api, blocks(xPlot), blocks(40 - timeInBlocks - 2))
+      ctx.lineTo(blocks(xPlot), blocks(40 - timeInBlocks));
+      ctx.arc(blocks(xPlot), blocks(40 - timeInBlocks), 2, 0, Math.PI * 2, true)
+      xPlot += 5;
+    }
+    ctx.stroke()
+  }
+
+  drawGrid();
+  drawAxis();
+  drawChart();
+</script>
